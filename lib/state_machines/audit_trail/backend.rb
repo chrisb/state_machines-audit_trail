@@ -38,10 +38,11 @@ class StateMachines::AuditTrail::Backend < Struct.new(:transition_class, :owner_
   # To add a new ORM, implement something similar to lib/state_machines/audit_trail/backend/active_record.rb
   # and return from here the appropriate object based on which ORM the transition_class is using
   #
-  def self.create_for(transition_class, owner_class, context = nil)
+  def self.create_for(transition_class, owner_class, context = nil, association = nil)
     if Object.const_defined?('ActiveRecord') && transition_class.ancestors.include?(::ActiveRecord::Base)
-      return StateMachines::AuditTrail::Backend::ActiveRecord.new(transition_class, owner_class, context)
+      return StateMachines::AuditTrail::Backend::ActiveRecord.new(transition_class, owner_class, context, association)
     elsif Object.const_defined?('Mongoid') && transition_class.ancestors.include?(::Mongoid::Document)
+      fail '`association` option is not valid for Mongoid' if association.present?
       return StateMachines::AuditTrail::Backend::Mongoid.new(transition_class, owner_class, context)
     else
       raise 'Not implemented. Only support for ActiveRecord and Mongoid is implemented. Pull requests welcome.'

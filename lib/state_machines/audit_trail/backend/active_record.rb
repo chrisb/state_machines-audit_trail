@@ -1,13 +1,17 @@
 require 'state_machines-activerecord'
 
 class StateMachines::AuditTrail::Backend::ActiveRecord < StateMachines::AuditTrail::Backend
-  attr_accessor :context
+  attr_accessor :context, :association, :transition_class
 
-  def initialize(transition_class, owner_class, context = nil)
-    @association = transition_class.to_s.tableize.split('/').last.to_sym
+  def initialize(transition_class, owner_class, context = nil, association = nil)
+    @association = association || default_association(transition_class)
     super transition_class, owner_class
     self.context = context # FIXME: actually not sure why we need to do this, but tests fail otherwise. Something with super's Struct?
     owner_class.has_many(@association, class_name: transition_class.to_s) unless owner_class.reflect_on_association(@association)
+  end
+
+  def default_association(transition_class)
+    transition_class.to_s.tableize.split('/').last.to_sym
   end
 
   def persist(object, fields)
